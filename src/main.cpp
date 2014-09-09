@@ -45,7 +45,7 @@ int main(int argc, const char * argv[])
 
         data = fdsfile.debias(data);
 
-//        data = abs(data);
+        data = abs(data);
 
         data = fdsfile.scaleForImage(data);
 
