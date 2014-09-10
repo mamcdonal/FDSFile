@@ -37,33 +37,24 @@ int main(int argc, const char * argv[])
             cout << fdsfile.fdsHeader.keys[i] + " = " + fdsfile.fdsHeader.values[i] << endl;
         }
 
-        Mat psd = fdsfile.getPSD(0,1000,0,1023);
-
         Mat data = fdsfile.getData(0,1000,0,1023);
+
+        fdsfile.debias(data);
+
+        Mat psd = fdsfile.getPSD(data);
+
+        Mat soundfield = fdsfile.getSoundfield(0,10000,0,100000,2048,10,500);
 
         log(1+psd,psd);
 
-        data = fdsfile.debias(data);
+        Mat dataToShow = fdsfile.scaleForImage(soundfield);
 
-        data = abs(data);
+        applyColorMap(dataToShow,dataToShow,COLORMAP_JET);
 
-        data = fdsfile.scaleForImage(data);
-
-        psd = fdsfile.scaleForImage(psd);
-
-        applyColorMap(psd,psd,COLORMAP_JET);
-
-        applyColorMap(data,data,COLORMAP_JET);
-
-        resize(data, data, Size(720,1280), 0, 0, INTER_CUBIC);
-
-        resize(psd, psd, Size(1280,720), 0, 0, INTER_CUBIC);
+        resize(dataToShow, dataToShow, Size(1280,720), 0, 0, INTER_CUBIC);
 
         namedWindow( "Display Data", CV_WINDOW_NORMAL);
-        imshow("Display Data", data.t());
-
-        namedWindow( "Display PSD", CV_WINDOW_NORMAL);
-        imshow("Display PSD", psd);
+        imshow("Display Data", dataToShow);
 
         waitKey(0);
     }

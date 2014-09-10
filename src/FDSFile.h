@@ -24,11 +24,11 @@ public:
 
     cv::Mat getData(int startBin, int endBin, int startShot, int endShot);
 
-    cv::Mat getPSD(int startBin,int endBin, int startShot, int endShot);
+    cv::Mat getPSD(cv::Mat data);
 
     cv::Mat getSoundfield(int startBin,int endBin, int startShot, int endShot, int fftSize, double fLow, double fHigh);
 
-    cv::Mat debias(cv::Mat data);
+    void debias(cv::Mat &data);
 
     cv::Mat scaleForImage(cv::Mat data);
 
