@@ -14,7 +14,7 @@
 #include <opencv2/contrib/contrib.hpp>
 
 #include "FDSFile.h"
-#include "FDSHeader.h"
+//#include "FDSHeader.h"
 
 using namespace cv;
 using namespace std;
@@ -25,36 +25,38 @@ int main(int argc, const char * argv[])
 
         FDSFile fdsfile = FDSFile(argv[1]);
 
-        cout <<  fdsfile.fdsHeader.name << endl;
+//        cout <<  fdsfile.fdsHeader.name << endl;
+//
+//        cout << "FDSVersion = " << fdsfile.fdsHeader.FDSVersion << endl;
+//
+//        cout << "HeaderSectionSize = " << fdsfile.fdsHeader.HeaderSizeBytes << endl;
+//
+//        for (int i=0; i<fdsfile.fdsHeader.keys.size(); ++i){
+//            cout << fdsfile.fdsHeader.keys[i] + " = " + fdsfile.fdsHeader.values[i] << endl;
+//        }
+//
+//        Mat data = fdsfile.getData(0,1000,0,1023);
+//
+//        fdsfile.debias(data);
+//
+//        Mat psd = fdsfile.getPSD(data);
+//
+//        log(1+psd,psd);
 
-        cout << endl;
+        cout << "Processing..." << endl;
 
-        cout << "FDSVersion = " << fdsfile.fdsHeader.FDSVersion << endl;
-
-        cout << "HeaderSectionSize = " << fdsfile.fdsHeader.HeaderSizeBytes << endl;
-
-        for (int i=0; i<fdsfile.fdsHeader.keys.size(); ++i){
-            cout << fdsfile.fdsHeader.keys[i] + " = " + fdsfile.fdsHeader.values[i] << endl;
-        }
-
-        Mat data = fdsfile.getData(0,1000,0,1023);
-
-        fdsfile.debias(data);
-
-        Mat psd = fdsfile.getPSD(data);
-
-        Mat soundfield = fdsfile.getSoundfield(0,10000,0,100000,2048,10,500);
-
-        log(1+psd,psd);
+        Mat soundfield = fdsfile.getSoundfield(0,283,0,1027071,1024,10,500);
 
         Mat dataToShow = fdsfile.scaleForImage(soundfield);
 
-        applyColorMap(dataToShow,dataToShow,COLORMAP_JET);
+        //resize(dataToShow, dataToShow, Size(1280,720), 0, 0, INTER_LINEAR);
 
-        resize(dataToShow, dataToShow, Size(1280,720), 0, 0, INTER_CUBIC);
+        applyColorMap(dataToShow,dataToShow,COLORMAP_JET);
 
         namedWindow( "Display Data", CV_WINDOW_NORMAL);
         imshow("Display Data", dataToShow);
+
+        cout << "Done!" << endl;
 
         waitKey(0);
     }

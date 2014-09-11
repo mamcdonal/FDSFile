@@ -107,7 +107,7 @@ Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, 
 	fLow = fmin(fmax(0,fLow),Fs/2.0);
 	fHigh = fmin(fmax(0,fHigh),Fs/2.0);
 
-	double fStep = 2.0*Fs/(double)fftSize;
+	double fStep = Fs/(double)fftSize;
 
 	int fLowBin = (int)floor(fLow/fStep);
 

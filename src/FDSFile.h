@@ -9,7 +9,7 @@
 #ifndef __FDSFile__FDSFile__
 #define __FDSFile__FDSFile__
 
-#include <fstream>
+//#include <fstream>
 #include "FDSHeader.h"
 #include <opencv2/core/core.hpp>
 
