@@ -25,15 +25,15 @@ int main(int argc, const char * argv[])
 
         FDSFile fdsfile = FDSFile(argv[1]);
 
-//        cout <<  fdsfile.fdsHeader.name << endl;
-//
-//        cout << "FDSVersion = " << fdsfile.fdsHeader.FDSVersion << endl;
-//
-//        cout << "HeaderSectionSize = " << fdsfile.fdsHeader.HeaderSizeBytes << endl;
-//
-//        for (int i=0; i<fdsfile.fdsHeader.keys.size(); ++i){
-//            cout << fdsfile.fdsHeader.keys[i] + " = " + fdsfile.fdsHeader.values[i] << endl;
-//        }
+        cout <<  fdsfile.fdsHeader.name << endl;
+
+        cout << "FDSVersion = " << fdsfile.fdsHeader.FDSVersion << endl;
+
+        cout << "HeaderSectionSize = " << fdsfile.fdsHeader.HeaderSizeBytes << endl;
+
+        for (size_t i=0; i<fdsfile.fdsHeader.keys.size(); ++i){
+            cout << fdsfile.fdsHeader.keys[i] + " = " + fdsfile.fdsHeader.values[i] << endl;
+        }
 //
 //        Mat data = fdsfile.getData(0,1000,0,1023);
 //
@@ -43,9 +43,9 @@ int main(int argc, const char * argv[])
 //
 //        log(1+psd,psd);
 
-        cout << "Processing..." << endl;
-
-        Mat soundfield = fdsfile.getSoundfield(0,283,0,1027071,1024,10,500);
+//        cout << "Processing..." << endl;
+//
+        Mat soundfield = fdsfile.getSoundfield(0,10,0,1e99,1024,10,500);
 
         Mat dataToShow = fdsfile.scaleForImage(soundfield);
 

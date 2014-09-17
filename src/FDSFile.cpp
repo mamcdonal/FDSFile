@@ -31,6 +31,8 @@ Mat FDSFile::getData(int startBin, int endBin, int startShot, int endShot){
 	int numBins = stoi(fdsHeader.getValue("DataLocusCount"));
 	int numShots = stoi(fdsHeader.getValue("TimeStepCount"));
 
+	cout << fdsHeader.getValue("DataLocusCount") << endl;
+
 	startBin = fmin(fmax(0,startBin),numBins);
 	endBin = fmin(fmax(0,endBin),numBins);
 

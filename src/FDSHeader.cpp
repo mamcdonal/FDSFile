@@ -75,7 +75,7 @@ void FDSHeader::ReadHeader(){
 string FDSHeader::getValue(string key){
     string value;
 
-    for (int i=0; i<keys.size(); ++i) {
+    for (size_t i=0; i<keys.size(); ++i) {
         if (key.compare(keys[i]) == 0){
             value = values[i];
             break;
@@ -88,13 +88,13 @@ string FDSHeader::getValue(string key){
 vector<string> FDSHeader::splitLineAtEquals(string line){
     vector<string> splitLine(2);
 
-    int i = 0;
-    while (i<line.length() && strncmp(&line[i],"=",1) != 0) {
+    size_t i = 0;
+    while (i<line.length() && line[i]!='=') {
         splitLine[0] += line[i];
         ++i;
     }
 
-    for (int j=i+1; j<line.length(); j++){
+    for (size_t j=i+1; j<line.length(); j++){
         splitLine[1] += line[j];
     }
 
@@ -104,7 +104,7 @@ vector<string> FDSHeader::splitLineAtEquals(string line){
 vector<int> FDSHeader::parseVectorOfInts(string line){
     vector<int> parsedLine;
 
-    for (int i=0; i<line.length();){
+    for (size_t i=0; i<line.length();){
         if (isdigit(line[i])){
             int j=i;
             string num;
@@ -124,8 +124,8 @@ vector<int> FDSHeader::parseVectorOfInts(string line){
 
 string FDSHeader::deblank(string str){
     string retStr;
-    for (int i=0; i<str.length(); ++i){
-        if (strncmp(&str[i]," ",1) !=0) {
+    for (size_t i=0; i<str.length(); ++i){
+    	if (str[i] != ' '){
             retStr += str[i];
         }
     }
