@@ -26,11 +26,21 @@ public:
 
     cv::Mat getPSD(cv::Mat data);
 
-    cv::Mat getSoundfield(int startBin,int endBin, int startShot, int endShot, int fftSize, double fLow, double fHigh);
+    cv::Mat getSoundfield(int startBin, int endBin, int startShot, int endShot, int fftSize, int overlap, double fLow, double fHigh);
+
+    cv::Mat getSpectrogram(int startBin, int endBin, int startShot, int endShot, int fftSize, int overlap);
 
     void debias(cv::Mat &data);
 
-    cv::Mat scaleForImage(cv::Mat data);
+    void scaleForImage(cv::Mat &data);
+
+private:
+
+    cv::Mat psdToSFCol(cv::Mat psd,int fLowBin, int fHighBin);
+
+    cv::Mat vecMedian(cv::Mat data, int dim);
+
+    cv::Mat vecMean(cv::Mat data, int dim);
 
 };
 

@@ -7,6 +7,7 @@
 //
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <opencv2/core/core.hpp>
@@ -23,7 +24,18 @@ int main(int argc, const char * argv[])
 {
     if(argc > 1){
 
-        FDSFile fdsfile = FDSFile(argv[1]);
+    	stringstream ss;
+    	int startBin,endBin,startShot,endShot,fftSize,overlap;
+    	double fLow,fHigh;
+
+    	string fdsFilename = argv[1];
+
+    	for (int i=2; i<argc; ++i)
+    		ss << argv[i] << '\n';
+
+    	ss >> startBin >> endBin >> startShot >> endShot >> fftSize >> overlap >> fLow >> fHigh;
+
+        FDSFile fdsfile = FDSFile(fdsFilename);
 
         cout <<  fdsfile.fdsHeader.name << endl;
 
@@ -34,8 +46,9 @@ int main(int argc, const char * argv[])
         for (size_t i=0; i<fdsfile.fdsHeader.keys.size(); ++i){
             cout << fdsfile.fdsHeader.keys[i] + " = " + fdsfile.fdsHeader.values[i] << endl;
         }
+
 //
-//        Mat data = fdsfile.getData(0,1000,0,1023);
+//        Mat data = fdsfile.getData(startBin,endBin,startShot,endShot);
 //
 //        fdsfile.debias(data);
 //
@@ -43,18 +56,20 @@ int main(int argc, const char * argv[])
 //
 //        log(1+psd,psd);
 
-//        cout << "Processing..." << endl;
-//
-        Mat soundfield = fdsfile.getSoundfield(0,10,0,1e99,1024,10,500);
+        Mat im = fdsfile.getSoundfield(startBin,endBin,startShot,endShot,fftSize,overlap,fLow,fHigh);
 
-        Mat dataToShow = fdsfile.scaleForImage(soundfield);
+//        Mat im = fdsfile.getSpectrogram(startBin,endBin,startShot,endShot,fftSize,overlap);
 
-        //resize(dataToShow, dataToShow, Size(1280,720), 0, 0, INTER_LINEAR);
+        log(1+im,im);
 
-        applyColorMap(dataToShow,dataToShow,COLORMAP_JET);
+        fdsfile.scaleForImage(im);
+
+        resize(im,im, Size(1280,720), 0, 0, INTER_CUBIC);
+
+        applyColorMap(im,im,COLORMAP_JET);
 
         namedWindow( "Display Data", CV_WINDOW_NORMAL);
-        imshow("Display Data", dataToShow);
+        imshow("Display Data", im);
 
         cout << "Done!" << endl;
 

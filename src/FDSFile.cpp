@@ -33,11 +33,11 @@ Mat FDSFile::getData(int startBin, int endBin, int startShot, int endShot){
 
 	cout << fdsHeader.getValue("DataLocusCount") << endl;
 
-	startBin = fmin(fmax(0,startBin),numBins);
-	endBin = fmin(fmax(0,endBin),numBins);
+	startBin = fmin(fmax(0,startBin),numBins-1);
+	endBin = fmin(fmax(0,endBin),numBins-1);
 
-	startShot = fmin(fmax(0,startShot),numShots);
-	endShot = fmin(fmax(0,endShot),numShots);
+	startShot = fmin(fmax(0,startShot),numShots-1);
+	endShot = fmin(fmax(0,endShot),numShots-1);
 
 	int numBinsToRead = fmin(numBins,endBin - startBin + 1);
 	int numShotsToRead = fmin(numShots,endShot - startShot + 1);
@@ -74,6 +74,8 @@ void FDSFile::debias(Mat &data){
 
 	data.convertTo(data,CV_32F,1,-pow(2,15));
 
+//	data.convertTo(data,CV_32F);
+
 	for (int i=0; i<data.cols; ++i)
 		data.col(i) -= mean(data.col(i));
 }
@@ -91,20 +93,37 @@ Mat FDSFile::getPSD(Mat data){
 
 	magnitude(ReImDFT[0],ReImDFT[1],psdData);
 
-	return psdData.colRange(0,(int)ceil(psdData.cols/2.0)+1);
+	return psdData.colRange(0,(int)ceil(psdData.cols/2)+1);
 };
 
-Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, int fftSize, double fLow, double fHigh){
+Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, int fftSize, int overlap, double fLow, double fHigh){
+
+	Mat soundfield;
+    Mat buffer;
+    Mat data;
+    Mat newData;
+    Mat psd;
 
 	int numBins = stoi(fdsHeader.getValue("DataLocusCount"));
 	int numShots = stoi(fdsHeader.getValue("TimeStepCount"));
 	int Fs = stoi(fdsHeader.getValue("TimeStepFrequency_Hz"));
 
-	startBin = fmin(fmax(0,startBin),numBins);
-	endBin = fmin(fmax(0,endBin),numBins);
+	startBin = fmin(fmax(0,startBin),numBins-1);
+	endBin = fmin(fmax(0,endBin),numBins-1);
 
-	startShot = fmin(fmax(0,startShot),numShots);
-	endShot = fmin(fmax(0,endShot),numShots);
+	startShot = fmin(fmax(0,startShot),numShots-1);
+	endShot = fmin(fmax(0,endShot),numShots-1);
+
+	int numBinsToRead = fmin(numBins,endBin - startBin + 1);
+	int numShotsToRead = fmin(numShots,endShot - startShot + 1);
+
+	int numBinsToSkip = numBins - numBinsToRead;
+
+	int numWins = (int)floor(numShotsToRead/(double)(fftSize-overlap));
+
+	int hopSize = fftSize-overlap;
+
+	int startOfData = fdsHeader.HeaderSizeBytes + (startBin + numBins*startShot)*sizeof(uint16_t);
 
 	fLow = fmin(fmax(0,fLow),Fs/2.0);
 	fHigh = fmin(fmax(0,fHigh),Fs/2.0);
@@ -115,15 +134,6 @@ Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, 
 
 	int fHighBin = (int)ceil(fHigh/fStep);
 
-	int numBinsToRead = fmin(numBins,endBin - startBin + 1);
-	int numShotsToRead = fmin(numShots,endShot - startShot + 1);
-
-	int numBinsToSkip = numBins - numBinsToRead;
-
-	int numWins = (int)floor(numShotsToRead/(double)fftSize);
-
-	int startOfData = fdsHeader.HeaderSizeBytes + (startBin + numBins*startShot)*sizeof(uint16_t);
-
     FILE *fdsStream = fopen (fdsHeader.name.c_str(), "rb" );
 
     if (fdsStream==NULL) {
@@ -131,31 +141,46 @@ Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, 
     	exit (1);
     }
 
-    Mat soundfield(numBinsToRead,numWins,CV_32F);
+    soundfield.create(numBinsToRead,numWins,CV_32F);
 
-    Mat buffer(1,numBinsToRead,DataType<uint16_t>::type);
+    buffer.create(1,numBinsToRead,DataType<uint16_t>::type);
 
-    Mat data(fftSize,numBinsToRead,DataType<uint16_t>::type);
+    data.create(fftSize,numBinsToRead,DataType<uint16_t>::type);
 
-    Mat psd;
-
-    Scalar signal, noise;
+    newData.create(fftSize,numBinsToRead,DataType<uint16_t>::type);
 
     fseek (fdsStream, startOfData, SEEK_SET);
 
-    for (int winNum = 0; winNum < numWins; ++winNum){
-    	for (int i=0; i<fftSize; ++i){
+    /*Read first fftSize number of shots*/
+	for (int i=0; i<fftSize; ++i){
+		fread (buffer.ptr(),sizeof(uint16_t),numBinsToRead,fdsStream);
+		buffer.copyTo(newData.row(i));
+		fseek(fdsStream,numBinsToSkip*sizeof(uint16_t),SEEK_CUR);
+	}
+
+	newData.copyTo(data);
+
+	debias(data);
+	psd = getPSD(data);
+	psdToSFCol(psd,fLowBin,fHighBin).copyTo(soundfield.col(0));
+
+    for (int winNum = 1; winNum < numWins; ++winNum){
+
+    	if (overlap > 0)
+    		newData.rowRange(hopSize,fftSize-1).copyTo(newData.rowRange(0,overlap-1));
+
+    	for (int i=overlap; i<fftSize; ++i){
     		fread (buffer.ptr(),sizeof(uint16_t),numBinsToRead,fdsStream);
-    		buffer.copyTo(data.row(i));
+    		buffer.copyTo(newData.row(i));
     		fseek(fdsStream,numBinsToSkip*sizeof(uint16_t),SEEK_CUR);
     	}
+
+    	newData.copyTo(data);
+
     	debias(data);
     	psd = getPSD(data);
-    	for (int i=0; i<numBinsToRead; ++i){
-    		signal = mean(psd.row(i).colRange(fLowBin,fHighBin));
-    		noise = mean(psd.row(i).colRange((int)(3*psd.cols/4.0),psd.cols));
-    		soundfield.at<float>(i,winNum) = signal[0]/noise[0];
-    	}
+
+    	psdToSFCol(psd,fLowBin,fHighBin).copyTo(soundfield.col(winNum));
     }
 
     fclose(fdsStream);
@@ -163,16 +188,150 @@ Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, 
 	return soundfield;
 };
 
-Mat FDSFile::scaleForImage(Mat data){
+Mat FDSFile::getSpectrogram(int startBin, int endBin, int startShot, int endShot, int fftSize, int overlap){
+	Mat spectrogram;
+    Mat buffer;
+    Mat data;
+    Mat newData;
+    Mat psd;
+
+	int numBins = stoi(fdsHeader.getValue("DataLocusCount"));
+	int numShots = stoi(fdsHeader.getValue("TimeStepCount"));
+
+	startBin = fmin(fmax(0,startBin),numBins-1);
+	endBin = fmin(fmax(0,endBin),numBins-1);
+
+	startShot = fmin(fmax(0,startShot),numShots-1);
+	endShot = fmin(fmax(0,endShot),numShots-1);
+
+	int numBinsToRead = fmin(numBins,endBin - startBin + 1);
+	int numShotsToRead = fmin(numShots,endShot - startShot + 1);
+
+	int numBinsToSkip = numBins - numBinsToRead;
+
+	int numWins = (int)floor(numShotsToRead/(double)(fftSize-overlap));
+
+	int hopSize = fftSize-overlap;
+
+	int startOfData = fdsHeader.HeaderSizeBytes + (startBin + numBins*startShot)*sizeof(uint16_t);
+
+	FILE *fdsStream = fopen (fdsHeader.name.c_str(), "rb" );
+
+	if (fdsStream==NULL) {
+		fputs ("File error",stderr);
+		exit (1);
+	}
+
+    spectrogram.create(numWins,(int)ceil(fftSize/2)+1,CV_32F);
+
+    buffer.create(1,numBinsToRead,DataType<uint16_t>::type);
+
+    data.create(fftSize,numBinsToRead,DataType<uint16_t>::type);
+
+    newData.create(fftSize,numBinsToRead,DataType<uint16_t>::type);
+
+	fseek (fdsStream, startOfData, SEEK_SET);
+
+	/*Read first fftSize number of shots*/
+	for (int i=0; i<fftSize; ++i){
+		fread (buffer.ptr(),sizeof(uint16_t),numBinsToRead,fdsStream);
+		buffer.copyTo(newData.row(i));
+		fseek(fdsStream,numBinsToSkip*sizeof(uint16_t),SEEK_CUR);
+	}
+
+	newData.copyTo(data);
+
+	debias(data);
+	psd = getPSD(data);
+	vecMean(psd,1).copyTo(spectrogram.row(0));
+
+	for (int winNum = 1; winNum < numWins; ++winNum){
+
+		if (overlap > 0)
+			newData.rowRange(hopSize,fftSize-1).copyTo(newData.rowRange(0,overlap-1));
+
+		for (int i=overlap; i<fftSize; ++i){
+			fread (buffer.ptr(),sizeof(uint16_t),numBinsToRead,fdsStream);
+			buffer.copyTo(newData.row(i));
+			fseek(fdsStream,numBinsToSkip*sizeof(uint16_t),SEEK_CUR);
+		}
+
+		newData.copyTo(data);
+
+		debias(data);
+		psd = getPSD(data);
+		vecMean(psd,1).copyTo(spectrogram.row(winNum));
+
+	}
+
+	fclose(fdsStream);
+
+	return spectrogram;
+};
+
+void FDSFile::scaleForImage(Mat &data){
     double min, max;
     minMaxLoc(data, &min, &max);
 
-    Mat adjData;
-
     convertScaleAbs(data,data,255/(max-min),-255*min/(max-min));
-
-    return data;
 };
 
+Mat FDSFile::psdToSFCol(Mat psd, int fLowBin, int fHighBin){
+	int numShots = psd.cols;
+	Mat sfCol;
 
+	Mat signal = vecMean(psd.colRange(fLowBin,fHighBin),2);
+
+	Mat noise = vecMedian(psd.colRange((int)(3*(numShots-1)/4.0),numShots-1),2);
+
+	divide(signal,noise,sfCol);
+
+	return sfCol;
+};
+
+Mat FDSFile::vecMedian(Mat data, int dim){
+	Mat medMat;
+	Mat sortedData;
+
+	if (dim ==1){
+		cv::sort(data,sortedData,SORT_ASCENDING | SORT_EVERY_COLUMN);
+
+		if (data.rows % 2 == 0){
+			medMat = 0.5*(sortedData.row(data.rows/2-1) + sortedData.row(data.rows/2));
+		}else{
+			medMat = sortedData.row((data.rows-1)/2);
+		}
+	}
+
+	if(dim == 2){
+		cv::sort(data,sortedData,SORT_ASCENDING | SORT_EVERY_ROW);
+
+		if (data.cols % 2 == 0){
+			medMat = 0.5*(sortedData.col(data.cols/2-1) + sortedData.col(data.cols/2));
+		}else{
+			medMat = sortedData.col((data.cols-1)/2);
+		}
+	}
+
+	return medMat;
+};
+
+Mat FDSFile::vecMean(Mat data, int dim){
+	Mat meanMat;
+
+	//TODO: Handle error cases when dim != 1 || dim != 2
+	if (dim ==1){
+		meanMat.create(1,data.cols,CV_32F);
+		for (int i=0; i < data.cols; ++i)
+			meanMat.col(i) = mean(data.col(i));
+	}
+
+	if(dim == 2){
+		meanMat.create(data.rows,1,CV_32F);
+		for (int i=0; i < data.rows; ++i)
+			meanMat.row(i) = mean(data.row(i));
+	}
+
+	return meanMat;
+};
 
