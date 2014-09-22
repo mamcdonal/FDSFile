@@ -243,9 +243,9 @@ Mat FDSFile::getSpectrogram(int startBin, int endBin, int startShot, int endShot
 
 	debias(data);
 	psd = getPSD(data);
-	vecMean(psd,1).copyTo(spectrogram.row(0));
+	vecMean(psd,1).copyTo(spectrogram.row(numWins-1));
 
-	for (int winNum = 1; winNum < numWins; ++winNum){
+	for (int winNum = numWins-2; winNum >= 0; --winNum){
 
 		if (overlap > 0)
 			newData.rowRange(hopSize,fftSize-1).copyTo(newData.rowRange(0,overlap-1));

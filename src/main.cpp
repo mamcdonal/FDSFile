@@ -56,9 +56,9 @@ int main(int argc, const char * argv[])
 //
 //        log(1+psd,psd);
 
-        Mat im = fdsfile.getSoundfield(startBin,endBin,startShot,endShot,fftSize,overlap,fLow,fHigh);
+//        Mat im = fdsfile.getSoundfield(startBin,endBin,startShot,endShot,fftSize,overlap,fLow,fHigh);
 
-//        Mat im = fdsfile.getSpectrogram(startBin,endBin,startShot,endShot,fftSize,overlap);
+        Mat im = fdsfile.getSpectrogram(startBin,endBin,startShot,endShot,fftSize,overlap);
 
         log(1+im,im);
 
