@@ -8,11 +8,14 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include src/subdir.mk
 -include subdir.mk
+-include src/subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(strip $(CU_DEPS)),)
+-include $(CU_DEPS)
+endif
 ifneq ($(strip $(C++_DEPS)),)
 -include $(C++_DEPS)
 endif
@@ -43,14 +46,14 @@ all: FDSFile
 # Tool invocations
 FDSFile: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
-	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/opt/local/lib -o "FDSFile" $(OBJS) $(USER_OBJS) $(LIBS)
+	@echo 'Invoking: NVCC Linker'
+	/usr/local/cuda-6.5/bin/nvcc --cudart static -L/usr/local/cuda/lib64 -L/usr/local/Fotech/lib -L/usr/lib64 -L/opt/local/lib --relocatable-device-code=false -gencode arch=compute_35,code=compute_35 -gencode arch=compute_35,code=sm_35 -link -o  "FDSFile" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) FDSFile
+	-$(RM) $(CU_DEPS)$(OBJS)$(C++_DEPS)$(C_DEPS)$(CC_DEPS)$(CPP_DEPS)$(EXECUTABLES)$(CXX_DEPS)$(C_UPPER_DEPS) FDSFile
 	-@echo ' '
 
 .PHONY: all clean dependents

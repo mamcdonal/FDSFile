@@ -14,67 +14,128 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/contrib/contrib.hpp>
 
+#include <argparser.h>
 #include "FDSFile.h"
 //#include "FDSHeader.h"
 
 using namespace cv;
 using namespace std;
 
-int main(int argc, const char * argv[])
-{
-    if(argc > 1){
+typedef enum displayType {
+	RAW,
+	PSD,
+	SOUNDFIELD,
+	SPECTROGRAM,
+	UNKNOWN
+} displayType_e;
 
-    	stringstream ss;
-    	int startBin,endBin,startShot,endShot,fftSize,overlap;
-    	double fLow,fHigh;
+displayType_e getDisplayType(string input){
+	displayType_e displayType;
 
-    	string fdsFilename = argv[1];
+	if (input.compare("raw") == 0){
+		displayType = RAW;
+	}else if (input.compare("psd") == 0){
+		displayType = PSD;
+	}else if (input.compare("soundfield") == 0 ){
+		displayType = SOUNDFIELD;
+	}else if (input.compare("spectrogram") == 0 ){
+		displayType = SPECTROGRAM;
+	}else{
+		displayType = UNKNOWN;
+	}
 
-    	for (int i=2; i<argc; ++i)
-    		ss << argv[i] << '\n';
+	return displayType;
+}
 
-    	ss >> startBin >> endBin >> startShot >> endShot >> fftSize >> overlap >> fLow >> fHigh;
+struct myArgParser:argparse::argparser{
+	string fdsFilename;
+	string displayType;
+	int startBin, endBin,startShot,endShot,fftSize,overlap;
+	double fLow,fHigh;
 
-        FDSFile fdsfile = FDSFile(fdsFilename);
+	myArgParser():fdsFilename(),displayType(),startBin(0),endBin(0),startShot(0),endShot(0),fftSize(0),overlap(0),fLow(0),fHigh(0){
+		register_argument('f',"FDS Filename","Name of FDS file to process.",fdsFilename,false,true);
+		register_argument('d',"Display Type","Display type: \"raw\", \"psd\", \"soundfield\" or \"spectrogram\".",displayType,false,true);
+		register_argument('a',"Start Bin","First bin to process.",startBin,false,false);
+		register_argument('b',"End Bin","Last bin to process.",endBin,false,false);
+		register_argument('x',"Start Shot","First shot to process.",startShot,false,false);
+		register_argument('y',"End Shot","Last shot to process.",endShot,false,false);
+		register_argument('n',"FFT Size","Number of shots per fft for soundfield or spectrogram.",fftSize,false,false);
+		register_argument('o',"Overlap","Number of shot to overlap for soundfield or spectrogram.",overlap,false,false);
+		register_argument('l',"Low-cut","Low frequency cutoff for soundfield display",fLow,false,false);
+		register_argument('m',"High-cut","high frequency cutoff for soundfield display",fHigh,false,false);
+	}
 
-        cout <<  fdsfile.fdsHeader.name << endl;
+	void assign_values(){
+		assign_value(fdsFilename,'f');
+		assign_value(displayType,'d');
+		assign_value(startBin,'a');
+		assign_value(endBin,'b');
+		assign_value(startShot,'x');
+		assign_value(endShot,'y');
+		assign_value(fftSize,'n');
+		assign_value(overlap,'o');
+		assign_value(fLow,'l');
+		assign_value(fHigh,'m');
+	}
 
-        cout << "FDSVersion = " << fdsfile.fdsHeader.FDSVersion << endl;
+//	void post_parse(){
+//		if (getDisplayType(displayType) == RAW){
+//			if (was_used('f') && was_used('v')) {
+//				if (!was_used('b')) {
+//				}
+//			}
+//		}else if (getDisplayType(displayType) == UNKNOWN){
+//			throw_error("Invalid display type.");
+//		}
+//	}
+};
 
-        cout << "HeaderSectionSize = " << fdsfile.fdsHeader.HeaderSizeBytes << endl;
+int main(int argc, char * argv[]){
 
-        for (size_t i=0; i<fdsfile.fdsHeader.keys.size(); ++i){
-            cout << fdsfile.fdsHeader.keys[i] + " = " + fdsfile.fdsHeader.values[i] << endl;
-        }
+	myArgParser args;
 
-//
-//        Mat data = fdsfile.getData(startBin,endBin,startShot,endShot);
-//
-//        fdsfile.debias(data);
-//
-//        Mat psd = fdsfile.getPSD(data);
-//
-//        log(1+psd,psd);
+	args.safe_parse(argc,argv);
 
-//        Mat im = fdsfile.getSoundfield(startBin,endBin,startShot,endShot,fftSize,overlap,fLow,fHigh);
+	displayType_e displayType = getDisplayType(args.displayType);
 
-        Mat im = fdsfile.getSpectrogram(startBin,endBin,startShot,endShot,fftSize,overlap);
+	FDSFile fdsfile = FDSFile(args.fdsFilename);
 
-        log(1+im,im);
+	fdsfile.fdsHeader.printHeader();
 
-        fdsfile.scaleForImage(im);
+	Mat data;
 
-        resize(im,im, Size(1280,720), 0, 0, INTER_CUBIC);
+	if (displayType == RAW || displayType == PSD){
+		data = fdsfile.getData(args.startBin,args.endBin,args.startShot,args.endShot);
+	}
 
-        applyColorMap(im,im,COLORMAP_JET);
+	if (displayType == PSD){
+		data = data.t();
+		fdsfile.debiasRows(data);
+		data = fdsfile.getPSD(data);
+//		data = fdsfile.getPSDGPU(data);
+	}
 
-        namedWindow( "Display Data", CV_WINDOW_NORMAL);
-        imshow("Display Data", im);
+	if (displayType == SOUNDFIELD){
+		data = fdsfile.getSoundfield(args.startBin,args.endBin,args.startShot,args.endShot,args.fftSize,args.overlap,args.fLow,args.fHigh);
+	}
 
-        cout << "Done!" << endl;
+	if (displayType == SPECTROGRAM){
+		data = fdsfile.getSpectrogram(args.startBin,args.endBin,args.startShot,args.endShot,args.fftSize,args.overlap);
+		log(1+data,data);
+		resize(data,data, Size(1280,720), 0, 0, INTER_CUBIC);
+	}
 
-        waitKey(0);
-    }
+	fdsfile.scaleForImage(data);
+
+	applyColorMap(data,data,COLORMAP_JET);
+
+	namedWindow( "Display Data", CV_WINDOW_NORMAL);
+	imshow("Display Data", data);
+
+	cout << "Done!" << endl;
+
+	waitKey(0);
 
     return 0;
 }

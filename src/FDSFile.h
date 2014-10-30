@@ -24,19 +24,21 @@ public:
 
     cv::Mat getData(int startBin, int endBin, int startShot, int endShot);
 
-    cv::Mat getPSD(cv::Mat data);
+    cv::Mat getPSD(cv::Mat &data);
+
+    cv::Mat getPSDGPU(cv::Mat data);
 
     cv::Mat getSoundfield(int startBin, int endBin, int startShot, int endShot, int fftSize, int overlap, double fLow, double fHigh);
 
     cv::Mat getSpectrogram(int startBin, int endBin, int startShot, int endShot, int fftSize, int overlap);
 
-    void debias(cv::Mat &data);
+    void debiasRows(cv::Mat &data);
 
     void scaleForImage(cv::Mat &data);
 
 private:
 
-    cv::Mat psdToSFCol(cv::Mat psd,int fLowBin, int fHighBin);
+    cv::Mat psdToSFCol(cv::Mat &psd,int fLowBin, int fHighBin);
 
     cv::Mat vecMedian(cv::Mat data, int dim);
 

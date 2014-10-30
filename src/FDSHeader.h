@@ -28,9 +28,11 @@ public:
 
     ~FDSHeader();
 
-    void ReadHeader();
+    void readHeader();
 
     std::string getValue(std::string key);
+
+    void printHeader();
 
 private:
 

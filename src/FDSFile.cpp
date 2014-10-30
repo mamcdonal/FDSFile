@@ -13,8 +13,13 @@
 #include <iostream>
 #include "math.h"
 
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <cufft.h>
+
 using namespace std;
 using namespace cv;
+using namespace thrust;
 
 FDSFile::FDSFile(){
 };
@@ -30,8 +35,6 @@ Mat FDSFile::getData(int startBin, int endBin, int startShot, int endShot){
 
 	int numBins = stoi(fdsHeader.getValue("DataLocusCount"));
 	int numShots = stoi(fdsHeader.getValue("TimeStepCount"));
-
-	cout << fdsHeader.getValue("DataLocusCount") << endl;
 
 	startBin = fmin(fmax(0,startBin),numBins-1);
 	endBin = fmin(fmax(0,endBin),numBins-1);
@@ -53,15 +56,14 @@ Mat FDSFile::getData(int startBin, int endBin, int startShot, int endShot){
     	exit (1);
     }
 
+    Mat data(numShotsToRead,numBinsToRead,DataType<uint16_t>::type);
     Mat buffer(1,numBinsToRead,DataType<uint16_t>::type);
 
-    Mat data(numShotsToRead,numBinsToRead,DataType<uint16_t>::type);
-
     fseek (fdsStream, startOfData, SEEK_SET);
-
     for (int i=0; i<numShotsToRead; ++i){
-    	fread(buffer.ptr(),sizeof(uint16_t),numBinsToRead,fdsStream);
-    	buffer.copyTo(data.row(i));
+		fread (buffer.ptr(),sizeof(uint16_t),numBinsToRead,fdsStream);
+		buffer.copyTo(data.row(i));
+//    	fread(data.ptr(i,0),sizeof(uint16_t),numBinsToRead,fdsStream);
     	fseek(fdsStream,numBinsToSkip*sizeof(uint16_t),SEEK_CUR);
     }
 
@@ -70,22 +72,20 @@ Mat FDSFile::getData(int startBin, int endBin, int startShot, int endShot){
 	return data;
 };
 
-void FDSFile::debias(Mat &data){
+void FDSFile::debiasRows(Mat &data){
 
 	data.convertTo(data,CV_32F,1,-pow(2,15));
 
-//	data.convertTo(data,CV_32F);
-
-	for (int i=0; i<data.cols; ++i)
-		data.col(i) -= mean(data.col(i));
+	for (int i=0; i<data.rows; ++i)
+			data.row(i) -= mean(data.row(i));
 }
 
-Mat FDSFile::getPSD(Mat data){
+Mat FDSFile::getPSD(Mat &data){
 	Mat psdData;
 
 	Mat dftData;
 
-	dft(data.t(),dftData,DFT_ROWS | DFT_SCALE | DFT_COMPLEX_OUTPUT);
+	dft(data,dftData,DFT_ROWS | DFT_SCALE | DFT_COMPLEX_OUTPUT);
 
 	vector<Mat> ReImDFT(2);
 
@@ -94,6 +94,47 @@ Mat FDSFile::getPSD(Mat data){
 	magnitude(ReImDFT[0],ReImDFT[1],psdData);
 
 	return psdData.colRange(0,(int)ceil(psdData.cols/2)+1);
+};
+
+Mat FDSFile::getPSDGPU(Mat data){
+	int numRows = data.rows;
+	int numCols = data.cols;
+
+	device_vector<float> deviceData(data.begin<float>(),data.end<float>());
+
+	cufftComplex *fftData;
+	cudaMalloc((void**)&fftData,numRows*(numCols/2+1)*sizeof(cufftComplex));
+
+	cufftHandle cufftPlan;
+
+	int rank = 1;
+	int n[1] = {numCols};
+	int idist = numCols;
+	int odist = numCols/2+1;
+	int inembed[] = {numCols};
+	int onembed[] = {numCols/2+1};
+	int istride = 1;
+	int ostride = 1;
+	int batch = numRows;
+
+	cufftPlanMany(&cufftPlan,
+			rank,
+			n,
+			inembed,istride, idist,
+			onembed, ostride,odist,
+			CUFFT_R2C,
+			batch);
+
+	cufftExecR2C(cufftPlan, raw_pointer_cast(deviceData.data()), fftData);
+
+	Mat psdData(numRows,numCols/2+1,CV_32F);
+
+	cudaMemcpy(psdData.data,fftData,sizeof(float)*numRows*(numCols/2+1),cudaMemcpyDeviceToHost);
+
+	cufftDestroy(cufftPlan);
+	cudaFree(fftData);
+
+	return psdData;
 };
 
 Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, int fftSize, int overlap, double fLow, double fHigh){
@@ -160,7 +201,8 @@ Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, 
 
 	newData.copyTo(data);
 
-	debias(data);
+	data = data.t();
+	debiasRows(data);
 	psd = getPSD(data);
 	psdToSFCol(psd,fLowBin,fHighBin).copyTo(soundfield.col(0));
 
@@ -177,7 +219,8 @@ Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, 
 
     	newData.copyTo(data);
 
-    	debias(data);
+    	data = data.t();
+    	debiasRows(data);
     	psd = getPSD(data);
 
     	psdToSFCol(psd,fLowBin,fHighBin).copyTo(soundfield.col(winNum));
@@ -241,7 +284,8 @@ Mat FDSFile::getSpectrogram(int startBin, int endBin, int startShot, int endShot
 
 	newData.copyTo(data);
 
-	debias(data);
+	data = data.t();
+	debiasRows(data);
 	psd = getPSD(data);
 	vecMean(psd,1).copyTo(spectrogram.row(numWins-1));
 
@@ -258,10 +302,10 @@ Mat FDSFile::getSpectrogram(int startBin, int endBin, int startShot, int endShot
 
 		newData.copyTo(data);
 
-		debias(data);
+		data = data.t();
+		debiasRows(data);
 		psd = getPSD(data);
 		vecMean(psd,1).copyTo(spectrogram.row(winNum));
-
 	}
 
 	fclose(fdsStream);
@@ -276,13 +320,14 @@ void FDSFile::scaleForImage(Mat &data){
     convertScaleAbs(data,data,255/(max-min),-255*min/(max-min));
 };
 
-Mat FDSFile::psdToSFCol(Mat psd, int fLowBin, int fHighBin){
+Mat FDSFile::psdToSFCol(Mat &psd, int fLowBin, int fHighBin){
+	float log2 = log(2);
 	int numShots = psd.cols;
 	Mat sfCol;
 
 	Mat signal = vecMean(psd.colRange(fLowBin,fHighBin),2);
 
-	Mat noise = vecMedian(psd.colRange((int)(3*(numShots-1)/4.0),numShots-1),2);
+	Mat noise = vecMedian(psd.colRange((int)(3*(numShots-1)/4.0),numShots-1),2)/log2;
 
 	divide(signal,noise,sfCol);
 

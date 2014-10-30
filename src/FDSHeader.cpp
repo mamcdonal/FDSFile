@@ -18,13 +18,13 @@ FDSHeader::FDSHeader(){
 
 FDSHeader::FDSHeader(string fdsFilename){
     name = fdsFilename;
-    ReadHeader();
+    readHeader();
 };
 
 FDSHeader::~FDSHeader(){
 };
 
-void FDSHeader::ReadHeader(){
+void FDSHeader::readHeader(){
     ifstream fdsStream(name);
 
     if (fdsStream.is_open()){
@@ -84,6 +84,12 @@ string FDSHeader::getValue(string key){
 
     return value;
 };
+
+void FDSHeader::printHeader(){
+    for (size_t i=0; i<keys.size(); ++i){
+        cout << keys[i] + " = " + values[i] << endl;
+    }
+}
 
 vector<string> FDSHeader::splitLineAtEquals(string line){
     vector<string> splitLine(2);

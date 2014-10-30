@@ -22,8 +22,9 @@ CPP_DEPS += \
 # Each subdirectory must supply rules for building sources it contributes
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
-	@echo 'Invoking: GCC C++ Compiler'
-	g++ -D__GXX_EXPERIMENTAL_CXX0X__ -I/opt/local/include/ -O0 -g3 -Wall -c -fmessage-length=0 -std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	@echo 'Invoking: NVCC Compiler'
+	/usr/local/cuda-6.5/bin/nvcc -D__GXX_EXPERIMENTAL_CXX0X__ -I/opt/local/include/ -I/usr/local/Fotech/include -I/usr/local/cuda-6.5/targets/x86_64-linux/include -G -g -O0 -Xcompiler -std=c++0x -gencode arch=compute_35,code=sm_35  -odir "src" -M -o "$(@:%.o=%.d)" "$<"
+	/usr/local/cuda-6.5/bin/nvcc -D__GXX_EXPERIMENTAL_CXX0X__ -I/opt/local/include/ -I/usr/local/Fotech/include -I/usr/local/cuda-6.5/targets/x86_64-linux/include -G -g -O0 -Xcompiler -std=c++0x --compile  -x c++ -o  "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
