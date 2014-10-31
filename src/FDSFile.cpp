@@ -13,13 +13,13 @@
 #include <iostream>
 #include "math.h"
 
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-#include <cufft.h>
+//#include <thrust/host_vector.h>
+//#include <thrust/device_vector.h>
+//#include <cufft.h>
 
 using namespace std;
 using namespace cv;
-using namespace thrust;
+//using namespace thrust;
 
 FDSFile::FDSFile(){
 };
@@ -96,46 +96,48 @@ Mat FDSFile::getPSD(Mat &data){
 	return psdData.colRange(0,(int)ceil(psdData.cols/2)+1);
 };
 
-Mat FDSFile::getPSDGPU(Mat data){
-	int numRows = data.rows;
-	int numCols = data.cols;
-
-	device_vector<float> deviceData(data.begin<float>(),data.end<float>());
-
-	cufftComplex *fftData;
-	cudaMalloc((void**)&fftData,numRows*(numCols/2+1)*sizeof(cufftComplex));
-
-	cufftHandle cufftPlan;
-
-	int rank = 1;
-	int n[1] = {numCols};
-	int idist = numCols;
-	int odist = numCols/2+1;
-	int inembed[] = {numCols};
-	int onembed[] = {numCols/2+1};
-	int istride = 1;
-	int ostride = 1;
-	int batch = numRows;
-
-	cufftPlanMany(&cufftPlan,
-			rank,
-			n,
-			inembed,istride, idist,
-			onembed, ostride,odist,
-			CUFFT_R2C,
-			batch);
-
-	cufftExecR2C(cufftPlan, raw_pointer_cast(deviceData.data()), fftData);
-
-	Mat psdData(numRows,numCols/2+1,CV_32F);
-
-	cudaMemcpy(psdData.data,fftData,sizeof(float)*numRows*(numCols/2+1),cudaMemcpyDeviceToHost);
-
-	cufftDestroy(cufftPlan);
-	cudaFree(fftData);
-
-	return psdData;
-};
+//Mat FDSFile::getPSDGPU(Mat data){
+//	int numRows = data.rows;
+//	int numCols = data.cols;
+//
+//	device_vector<float> deviceData(data.begin<float>(),data.end<float>());
+//
+//	cufftComplex *fftData;
+//	cudaMalloc((void**)&fftData,numRows*(numCols/2+1)*sizeof(cufftComplex));
+//
+//	cufftHandle cufftPlan;
+//
+//	int rank = 1;
+//	int n[1] = {numCols};
+//	int idist = numCols;
+//	int odist = numCols/2+1;
+//	int inembed[] = {numCols};
+//	int onembed[] = {numCols/2+1};
+//	int istride = 1;
+//	int ostride = 1;
+//	int batch = numRows;
+//
+//	cufftPlanMany(&cufftPlan,
+//			rank,
+//			n,
+//			inembed,istride, idist,
+//			onembed, ostride,odist,
+//			CUFFT_R2C,
+//			batch);
+//
+//	cufftExecR2C(cufftPlan, raw_pointer_cast(deviceData.data()), fftData);
+//
+//	Mat psdData(numRows,numCols/2+1,CV_32F);
+//
+//	cudaMemcpy(psdData.data,fftData,sizeof(float)*numRows*(numCols/2+1),cudaMemcpyDeviceToHost);
+//
+//	cufftDestroy(cufftPlan);
+//	cudaFree(fftData);
+//
+//	psdData = abs(psdData);
+//
+//	return psdData;
+//};
 
 Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, int fftSize, int overlap, double fLow, double fHigh){
 
@@ -222,7 +224,6 @@ Mat FDSFile::getSoundfield(int startBin,int endBin, int startShot, int endShot, 
     	data = data.t();
     	debiasRows(data);
     	psd = getPSD(data);
-
     	psdToSFCol(psd,fLowBin,fHighBin).copyTo(soundfield.col(winNum));
     }
 
