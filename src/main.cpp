@@ -22,6 +22,7 @@ using namespace cv;
 using namespace std;
 
 typedef enum displayType {
+	HEADER,
 	RAW,
 	PSD,
 	SOUNDFIELD,
@@ -32,7 +33,10 @@ typedef enum displayType {
 displayType_e getDisplayType(string input){
 	displayType_e displayType;
 
-	if (input.compare("raw") == 0){
+
+	if (input.compare("header") == 0){
+		displayType = HEADER;
+	}else if (input.compare("raw") == 0){
 		displayType = RAW;
 	}else if (input.compare("psd") == 0){
 		displayType = PSD;
@@ -55,7 +59,7 @@ struct myArgParser:argparse::argparser{
 
 	myArgParser():fdsFilename(),displayType(),startBin(0),endBin(0),startShot(0),endShot(0),fftSize(0),overlap(0),fLow(0),fHigh(0){
 		register_argument('f',"FDS Filename","Name of FDS file to process.",fdsFilename,false,true);
-		register_argument('d',"Display Type","Display type: \"raw\", \"psd\", \"soundfield\" or \"spectrogram\".",displayType,false,true);
+		register_argument('d',"Display Type","Display type:\"header\", \"raw\", \"psd\", \"soundfield\" or \"spectrogram\".",displayType,false,true);
 		register_argument('a',"Start Bin","First bin to process.",startBin,false,false);
 		register_argument('b',"End Bin","Last bin to process.",endBin,false,false);
 		register_argument('x',"Start Shot","First shot to process.",startShot,false,false);
@@ -79,16 +83,17 @@ struct myArgParser:argparse::argparser{
 		assign_value(fHigh,'m');
 	}
 
-//	void post_parse(){
+	void post_parse(){
 //		if (getDisplayType(displayType) == RAW){
 //			if (was_used('f') && was_used('v')) {
 //				if (!was_used('b')) {
 //				}
 //			}
-//		}else if (getDisplayType(displayType) == UNKNOWN){
-//			throw_error("Invalid display type.");
-//		}
-//	}
+//		}else
+		if (getDisplayType(displayType) == UNKNOWN){
+			throw_error("Invalid display type.");
+		}
+	}
 };
 
 int main(int argc, char * argv[]){
@@ -101,42 +106,42 @@ int main(int argc, char * argv[]){
 
 	FDSFile fdsfile = FDSFile(args.fdsFilename);
 
-	fdsfile.fdsHeader.printHeader();
-
 	Mat data;
 
-	if (displayType == RAW || displayType == PSD){
-		data = fdsfile.getData(args.startBin,args.endBin,args.startShot,args.endShot);
+	if (displayType == HEADER){
+		fdsfile.fdsHeader.printHeader();
+	}else{
+
+		if (displayType == RAW || displayType == PSD){
+			data = fdsfile.getData(args.startBin,args.endBin,args.startShot,args.endShot);
+		}
+
+		if (displayType == PSD){
+			data = data.t();
+			fdsfile.debiasRows(data);
+			data = fdsfile.getPSD(data);
+			//		data = fdsfile.getPSDGPU(data);
+		}
+
+		if (displayType == SOUNDFIELD){
+			data = fdsfile.getSoundfield(args.startBin,args.endBin,args.startShot,args.endShot,args.fftSize,args.overlap,args.fLow,args.fHigh);
+		}
+
+		if (displayType == SPECTROGRAM){
+			data = fdsfile.getSpectrogram(args.startBin,args.endBin,args.startShot,args.endShot,args.fftSize,args.overlap);
+			log(1+data,data);
+			resize(data,data, Size(1280,720), 0, 0, INTER_CUBIC);
+		}
+
+		fdsfile.scaleForImage(data);
+
+		applyColorMap(data,data,COLORMAP_JET);
+
+		namedWindow( "Display Data", CV_WINDOW_NORMAL);
+		imshow("Display Data", data);
+
+		waitKey(0);
 	}
-
-	if (displayType == PSD){
-		data = data.t();
-		fdsfile.debiasRows(data);
-		data = fdsfile.getPSD(data);
-//		data = fdsfile.getPSDGPU(data);
-	}
-
-	if (displayType == SOUNDFIELD){
-		data = fdsfile.getSoundfield(args.startBin,args.endBin,args.startShot,args.endShot,args.fftSize,args.overlap,args.fLow,args.fHigh);
-	}
-
-	if (displayType == SPECTROGRAM){
-		data = fdsfile.getSpectrogram(args.startBin,args.endBin,args.startShot,args.endShot,args.fftSize,args.overlap);
-		log(1+data,data);
-		resize(data,data, Size(1280,720), 0, 0, INTER_CUBIC);
-	}
-
-	fdsfile.scaleForImage(data);
-
-	applyColorMap(data,data,COLORMAP_JET);
-
-	namedWindow( "Display Data", CV_WINDOW_NORMAL);
-	imshow("Display Data", data);
-
-	cout << "Done!" << endl;
-
-	waitKey(0);
-
     return 0;
 }
 
