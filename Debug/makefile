@@ -44,7 +44,7 @@ all: FDSFile
 FDSFile: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C++ Linker'
-	g++ -L/usr/local/cuda/lib64 -L/usr/local/Fotech/lib -L/usr/lib64 -L/opt/local/lib -o "FDSFile" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L/usr/local/Fotech/lib -L/usr/local/cernroot/lib -L/usr/local/dislin/lib -L/usr/lib64 -L/opt/local/lib -o "FDSFile" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

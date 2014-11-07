@@ -14,6 +14,8 @@
 using namespace std;
 
 FDSHeader::FDSHeader(){
+	this->FDSVersion = -1;
+	this->HeaderSizeBytes = 0;
 };
 
 FDSHeader::FDSHeader(string fdsFilename){
@@ -95,7 +97,7 @@ vector<string> FDSHeader::splitLineAtEquals(string line){
     vector<string> splitLine(2);
 
     size_t i = 0;
-    while (i<line.length() && line[i]!='=') {
+    while (i<line.length() && line[i] != '=') {
         splitLine[0] += line[i];
         ++i;
     }

@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lopencv_imgproc -largparser -lcufft -lopencv_core -lopencv_contrib -lopencv_highgui
+LIBS := -lMathCore -lCore -lMatrix -lThread -largparser -lHist -lRIO -lGraf -lGpad -ldislin -lopencv_highgui -lopencv_core -lopencv_contrib -lopencv_imgproc
 

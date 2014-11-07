@@ -13,13 +13,8 @@
 #include <iostream>
 #include "math.h"
 
-//#include <thrust/host_vector.h>
-//#include <thrust/device_vector.h>
-//#include <cufft.h>
-
 using namespace std;
 using namespace cv;
-//using namespace thrust;
 
 FDSFile::FDSFile(){
 };
@@ -30,6 +25,16 @@ FDSFile::FDSFile(string fdsFilename){
 
 FDSFile::~FDSFile(){
 };
+
+std::vector<float> FDSFile::getSamplePoints(float firstPoint, int numPoints, float pointSpacing){
+
+	vector<float> samplePoints(numPoints);
+
+	for (int i = 0; i< numPoints; ++i)
+		samplePoints[i] = i*pointSpacing + firstPoint;
+
+	return samplePoints;
+}
 
 Mat FDSFile::getData(int startBin, int endBin, int startShot, int endShot){
 
@@ -75,6 +80,8 @@ Mat FDSFile::getData(int startBin, int endBin, int startShot, int endShot){
 void FDSFile::debiasRows(Mat &data){
 
 	data.convertTo(data,CV_32F,1,-pow(2,15));
+
+//	data.convertTo(data,DataType<float>::type,1,-pow(2,15));
 
 	for (int i=0; i<data.rows; ++i)
 			data.row(i) -= mean(data.row(i));

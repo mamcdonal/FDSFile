@@ -13,10 +13,10 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/contrib/contrib.hpp>
+#include "grapher.h"
 
 #include <argparser.h>
 #include "FDSFile.h"
-//#include "FDSHeader.h"
 
 using namespace cv;
 using namespace std;
@@ -32,7 +32,6 @@ typedef enum displayType {
 
 displayType_e getDisplayType(string input){
 	displayType_e displayType;
-
 
 	if (input.compare("header") == 0){
 		displayType = HEADER;
@@ -83,6 +82,7 @@ struct myArgParser:argparse::argparser{
 		assign_value(fHigh,'m');
 	}
 
+//	TODO handle post parse
 	void post_parse(){
 //		if (getDisplayType(displayType) == RAW){
 //			if (was_used('f') && was_used('v')) {
@@ -106,28 +106,94 @@ int main(int argc, char * argv[]){
 
 	FDSFile fdsfile = FDSFile(args.fdsFilename);
 
+	int firstBin = args.startBin;
+	int lastBin = args.endBin;
+	int firstShot = args.startShot;
+	int lastShot = args.endShot;
+
+	float m0 = stof(fdsfile.fdsHeader.getValue("PositionOfFirstSample_m"));
+	float t0 = 0;
+	float f0 = 0;
+
+	int numSamples_m;
+	int numSamples_t;
+	int numSamples_f;
+
+	float Fs = stof(fdsfile.fdsHeader.getValue("TimeStepFrequency_Hz"));
+
+	float spacing_m = stof(fdsfile.fdsHeader.getValue("DataLocusSpacing_m"));
+	float spacing_t;
+	float spacing_f = Fs/(2.0*numSamples_f);
+
+	vector<float> meters;
+
+	vector<float> time;
+
+	vector<float> frequency;
+
 	Mat data;
 
 	if (displayType == HEADER){
 		fdsfile.fdsHeader.printHeader();
 	}else{
-
 		if (displayType == RAW || displayType == PSD){
-			data = fdsfile.getData(args.startBin,args.endBin,args.startShot,args.endShot);
+
+			data = fdsfile.getData(firstBin, lastBin, firstShot, lastShot);
+
+			data = data.t();
+			fdsfile.debiasRows(data);
+
+			numSamples_m = data.rows;
+			numSamples_t = data.cols;
+
+			spacing_t = 1.0/Fs;
+
+			meters = fdsfile.getSamplePoints(m0,numSamples_m,spacing_m);
+			time = fdsfile.getSamplePoints(t0,numSamples_t,spacing_t);
+
+//			int len = numSamples_t*numSamples_m;
+//			vector<float> vData(len);
+//			float* pData = reinterpret_cast<float*>(data.data);
+//			std::copy(pData,pData + len, vData.begin());
+
+			grapher::imagesc(time.data(),meters.data(),(float*)data.data,numSamples_m,numSamples_t);
 		}
 
 		if (displayType == PSD){
-			data = data.t();
-			fdsfile.debiasRows(data);
+
 			data = fdsfile.getPSD(data);
-			//		data = fdsfile.getPSDGPU(data);
+
+			numSamples_m = data.rows;
+			numSamples_f = data.cols;
+
+			spacing_f = Fs/(2.0*numSamples_f);
+
+			meters = fdsfile.getSamplePoints(m0,numSamples_m,spacing_m);
+			frequency = fdsfile.getSamplePoints(f0,numSamples_f,spacing_f);
+
+			grapher::imagesc(frequency.data(),meters.data(),(float*)data.data,numSamples_m,numSamples_f);
 		}
 
 		if (displayType == SOUNDFIELD){
+
 			data = fdsfile.getSoundfield(args.startBin,args.endBin,args.startShot,args.endShot,args.fftSize,args.overlap,args.fLow,args.fHigh);
+
+			numSamples_m = data.rows;
+			numSamples_t = data.cols;
+
+			spacing_t = (args.fftSize-args.overlap)/Fs;
+
+			meters = fdsfile.getSamplePoints(m0,numSamples_m,spacing_m);
+			time = fdsfile.getSamplePoints(t0,numSamples_t,spacing_t);
+
+			grapher::imagesc(time.data(),meters.data(),(float*)data.data,numSamples_m,numSamples_t);
 		}
 
 		if (displayType == SPECTROGRAM){
+
+//			vector<float> frequency = fdsfile.getSamplePoints(f0,numSamples_f,spacing_f);
+//			vector<float> time = fdsfile.getSamplePoints(t0,numSamples_t,spacing_t);
+
 			data = fdsfile.getSpectrogram(args.startBin,args.endBin,args.startShot,args.endShot,args.fftSize,args.overlap);
 			log(1+data,data);
 			resize(data,data, Size(1280,720), 0, 0, INTER_CUBIC);

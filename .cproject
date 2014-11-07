@@ -22,8 +22,10 @@
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.487332309" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.18244683" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
 								<option id="gnu.cpp.compiler.option.include.paths.6953097" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr/local/cuda-6.5/targets/x86_64-linux/include"/>
 									<listOptionValue builtIn="false" value="/usr/local/Fotech/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/cernroot/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/dislin"/>
+									<listOptionValue builtIn="false" value="/home/fotech/cuda-workspace/Grapher/src"/>
 									<listOptionValue builtIn="false" value="/opt/local/include/"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.989688685" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -31,7 +33,7 @@
 								</option>
 								<option id="gnu.cpp.compiler.option.optimization.level.451525075" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.debugging.level.1204924628" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.other.other.485441748" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.485441748" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1598367582" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.369547975" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
@@ -42,16 +44,25 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1295459118" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.318833349" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.libs.1298630041" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="opencv_imgproc"/>
+									<listOptionValue builtIn="false" value="MathCore"/>
+									<listOptionValue builtIn="false" value="Core"/>
+									<listOptionValue builtIn="false" value="Matrix"/>
+									<listOptionValue builtIn="false" value="Thread"/>
 									<listOptionValue builtIn="false" value="argparser"/>
-									<listOptionValue builtIn="false" value="cufft"/>
+									<listOptionValue builtIn="false" value="Hist"/>
+									<listOptionValue builtIn="false" value="RIO"/>
+									<listOptionValue builtIn="false" value="Graf"/>
+									<listOptionValue builtIn="false" value="Gpad"/>
+									<listOptionValue builtIn="false" value="dislin"/>
+									<listOptionValue builtIn="false" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" value="opencv_core"/>
 									<listOptionValue builtIn="false" value="opencv_contrib"/>
-									<listOptionValue builtIn="false" value="opencv_highgui"/>
+									<listOptionValue builtIn="false" value="opencv_imgproc"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.262160351" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/usr/local/cuda/lib64"/>
 									<listOptionValue builtIn="false" value="/usr/local/Fotech/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/cernroot/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/dislin/lib"/>
 									<listOptionValue builtIn="false" value="/usr/lib64"/>
 									<listOptionValue builtIn="false" value="/opt/local/lib"/>
 								</option>
@@ -100,13 +111,15 @@
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.96093513" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.446313799" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
 								<option id="gnu.cpp.compiler.option.include.paths.970409261" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr/local/cuda-6.5/targets/x86_64-linux/include"/>
 									<listOptionValue builtIn="false" value="/usr/local/Fotech/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/cernroot/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/dislin"/>
+									<listOptionValue builtIn="false" value="/home/fotech/cuda-workspace/Grapher/src"/>
 									<listOptionValue builtIn="false" value="/opt/local/include/"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.optimization.level.1493642886" name="Optimization Level" superClass="gnu.cpp.compiler.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.debugging.level.1454526333" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.other.other.984104916" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
+								<option id="gnu.cpp.compiler.option.other.other.984104916" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++0x" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.580483332" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.538408721" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
@@ -117,16 +130,25 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1812706364" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.linker.base.398873842" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.libs.154698155" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="opencv_highgui"/>
+									<listOptionValue builtIn="false" value="MathCore"/>
+									<listOptionValue builtIn="false" value="Core"/>
+									<listOptionValue builtIn="false" value="Matrix"/>
+									<listOptionValue builtIn="false" value="Thread"/>
 									<listOptionValue builtIn="false" value="argparser"/>
-									<listOptionValue builtIn="false" value="cufft"/>
+									<listOptionValue builtIn="false" value="Hist"/>
+									<listOptionValue builtIn="false" value="RIO"/>
+									<listOptionValue builtIn="false" value="Graf"/>
+									<listOptionValue builtIn="false" value="Gpad"/>
+									<listOptionValue builtIn="false" value="dislin"/>
+									<listOptionValue builtIn="false" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" value="opencv_core"/>
 									<listOptionValue builtIn="false" value="opencv_contrib"/>
 									<listOptionValue builtIn="false" value="opencv_imgproc"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.1906865063" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/usr/local/cuda/lib64"/>
 									<listOptionValue builtIn="false" value="/usr/local/Fotech/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/cernroot/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/dislin/lib"/>
 									<listOptionValue builtIn="false" value="/usr/lib64"/>
 									<listOptionValue builtIn="false" value="/opt/local/lib"/>
 								</option>
@@ -184,7 +206,13 @@
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.12621163;cdt.managedbuild.config.gnu.macosx.exe.debug.12621163.;nvcc.compiler.base.2038447711;nvcc.compiler.input.c.1708260408">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="com.nvidia.cuda.ide.build.NVCCPerProjectProfile"/>
 		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1044206335;cdt.managedbuild.config.macosx.exe.release.1044206335.;cdt.managedbuild.tool.gnu.c.compiler.base.538408721;cdt.managedbuild.tool.gnu.c.compiler.input.1141840224">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.12621163;cdt.managedbuild.config.gnu.macosx.exe.debug.12621163.;cdt.managedbuild.tool.gnu.cpp.compiler.base.1766284680;cdt.managedbuild.tool.gnu.cpp.compiler.input.1353324224">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1044206335;cdt.managedbuild.config.macosx.exe.release.1044206335.;cdt.managedbuild.tool.gnu.cpp.compiler.base.446313799;cdt.managedbuild.tool.gnu.cpp.compiler.input.580483332">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.12621163;cdt.managedbuild.config.gnu.macosx.exe.debug.12621163.;nvcc.compiler.base.2038447711;nvcc.compiler.input.cpp.588123931">

@@ -22,6 +22,8 @@ public:
     FDSFile(std::string fdsFilename);
     ~FDSFile();
 
+    std::vector<float> getSamplePoints(float firstPoint, int numPoints, float pointSpacing);
+
     cv::Mat getData(int startBin, int endBin, int startShot, int endShot);
 
     cv::Mat getPSD(cv::Mat &data);
